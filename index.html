@@ -1,314 +1,86 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Piano Trainer MVP</title>
+    <meta charset="UTF-8">
 
-<style>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
-body{
-    font-family:Arial,sans-serif;
-    background:#f5f5f5;
-    text-align:center;
-    padding:20px;
-}
+    <title>Piano Trainer V0.2</title>
 
-h1{
-    color:#333;
-}
+    <link rel="stylesheet" href="style.css">
 
-#noteDisplay{
-    font-size:120px;
-    margin:40px 0;
-    color:#e0a800;
-    transition:0.3s;
-}
-
-.correct{
-    color:#28a745 !important;
-}
-
-.wrong{
-    color:#dc3545 !important;
-}
-
-button{
-    font-size:22px;
-    padding:15px 30px;
-    border:none;
-    border-radius:12px;
-    background:#0078d7;
-    color:white;
-    cursor:pointer;
-}
-
-button:hover{
-    background:#005fa3;
-}
-
-#status{
-    margin-top:25px;
-    font-size:24px;
-}
-
-#frequency{
-    margin-top:10px;
-    font-size:18px;
-    color:#666;
-}
-
-</style>
+    <script src="https://unpkg.com/vexflow@4.2.3/build/cjs/vexflow.js"></script>
 
 </head>
+
 <body>
 
-<h1>Piano Trainer MVP</h1>
+    <div class="container">
 
-<p>Spiele die angezeigte Note auf deinem Klavier.</p>
+        <h1>Piano Trainer</h1>
 
-<div id="noteDisplay">C4</div>
+        <p class="subtitle">
+            Spiele die markierte Note auf dem Klavier.
+        </p>
 
-<button id="startBtn">
-Mikrofon starten
-</button>
+        <div class="controls">
 
-<div id="status">
-Bereit
-</div>
+            <button id="startBtn">
+                Aufnahme beginnen
+            </button>
 
-<div id="frequency">
-0 Hz
-</div>
+            <button id="stopBtn">
+                Aufnahme beenden
+            </button>
 
-<script>
+            <button id="newRowBtn">
+                Neue Notenreihe
+            </button>
 
-const NOTES = [
-    "C4",
-    "D4",
-    "E4",
-    "F4",
-    "G4",
-    "A4",
-    "B4",
-    "C5"
-];
+        </div>
 
-let targetNote = "";
-let audioContext;
-let analyser;
-let microphone;
-let dataArray;
+        <div class="timerBox">
 
-const noteDisplay =
-document.getElementById("noteDisplay");
+            <div class="timerLabel">
+                Gesamtzeit
+            </div>
 
-const status =
-document.getElementById("status");
+            <div id="timerDisplay">
+                0.0 s
+            </div>
 
-const frequencyDisplay =
-document.getElementById("frequency");
+        </div>
 
-function randomNote(){
+        <div id="notation"></div>
 
-    targetNote =
-    NOTES[Math.floor(Math.random()*NOTES.length)];
+        <div id="status">
+            Bereit
+        </div>
 
-    noteDisplay.innerText =
-    targetNote;
+        <div id="frequency">
+            --
+        </div>
 
-    noteDisplay.className = "";
-}
+        <div class="results">
 
-randomNote();
+            <h2>Ergebnis</h2>
 
+            <div id="resultContent">
 
-function frequencyToMidi(freq){
+                Noch keine Messung vorhanden.
 
-    return Math.round(
-        69 + 12 *
-        Math.log2(freq / 440)
-    );
+            </div>
 
-}
+        </div>
 
-function midiToNote(midi){
+    </div>
 
-    const names =
-    ["C","C#","D","D#","E",
-     "F","F#","G","G#","A",
-     "A#","B"];
-
-    const octave =
-    Math.floor(midi/12)-1;
-
-    const name =
-    names[midi % 12];
-
-    return name + octave;
-}
-
-function autoCorrelate(buffer,sampleRate){
-
-    let SIZE = buffer.length;
-
-    let rms = 0;
-
-    for(let i=0;i<SIZE;i++){
-        rms += buffer[i]*buffer[i];
-    }
-
-    rms =
-    Math.sqrt(rms/SIZE);
-
-    if(rms < 0.01)
-        return -1;
-
-    let r1=0;
-    let r2=SIZE-1;
-    const thres=0.2;
-
-    for(let i=0;i<SIZE/2;i++){
-        if(Math.abs(buffer[i])<thres){
-            r1=i;
-            break;
-        }
-    }
-
-    for(let i=1;i<SIZE/2;i++){
-        if(Math.abs(buffer[SIZE-i])<thres){
-            r2=SIZE-i;
-            break;
-        }
-    }
-
-    buffer =
-    buffer.slice(r1,r2);
-
-    SIZE =
-    buffer.length;
-
-    let c =
-    new Array(SIZE).fill(0);
-
-    for(let i=0;i<SIZE;i++){
-        for(let j=0;j<SIZE-i;j++){
-            c[i]+=buffer[j]*buffer[j+i];
-        }
-    }
-
-    let d=0;
-
-    while(c[d]>c[d+1])
-        d++;
-
-    let maxval=-1;
-    let maxpos=-1;
-
-    for(let i=d;i<SIZE;i++){
-
-        if(c[i]>maxval){
-
-            maxval=c[i];
-            maxpos=i;
-
-        }
-    }
-
-    let T0=maxpos;
-
-    return sampleRate/T0;
-}
-
-async function startMic(){
-
-    const stream =
-    await navigator.mediaDevices.getUserMedia({
-        audio:true
-    });
-
-    audioContext =
-    new AudioContext();
-
-    analyser =
-    audioContext.createAnalyser();
-
-    microphone =
-    audioContext.createMediaStreamSource(
-        stream
-    );
-
-    microphone.connect(
-        analyser
-    );
-
-    analyser.fftSize =
-    2048;
-
-    dataArray =
-    new Float32Array(
-        analyser.fftSize
-    );
-
-    detect();
-}
-
-function detect(){
-
-    analyser.getFloatTimeDomainData(
-        dataArray
-    );
-
-    const freq =
-    autoCorrelate(
-        dataArray,
-        audioContext.sampleRate
-    );
-
-    if(freq > 0){
-
-        frequencyDisplay.innerText =
-        freq.toFixed(1)+" Hz";
-
-        const midi =
-        frequencyToMidi(freq);
-
-        const note =
-        midiToNote(midi);
-
-        status.innerText =
-        "Erkannt: " + note;
-
-        if(note === targetNote){
-
-            noteDisplay.className =
-            "correct";
-
-            status.innerText =
-            "Richtig ✓";
-
-            setTimeout(()=>{
-
-                randomNote();
-
-            },700);
-        }
-    }
-
-    requestAnimationFrame(
-        detect
-    );
-}
-
-document
-.getElementById("startBtn")
-.addEventListener(
-    "click",
-    startMic
-);
-
-</script>
+    <script src="app.js"></script>
 
 </body>
+
 </html>
