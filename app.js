@@ -34,8 +34,6 @@ let noteStartTime = null;
 
 let solvedTimes = [];
 
-let timerInterval = null;
-
 let audioContext = null;
 let analyser = null;
 let microphone = null;
@@ -126,20 +124,12 @@ function renderSequence() {
 // ---------------------
 
 function startTimer() {
-	startTime = performance.now();
-	noteStartTime = startTime;
 
-	clearInterval(timerInterval);
+    startTime = performance.now();
+    noteStartTime = startTime;
 
-	timerInterval = setInterval(() => {
-		const elapsed = (performance.now() - startTime) / 1000;
-
-		timerDisplay.textContent = elapsed.toFixed(1) + " s";
-	}, 100);
-}
-
-function stopTimer() {
-	clearInterval(timerInterval);
+    timerDisplay.innerHTML =
+        "Training aktiv<br>";
 }
 
 // ---------------------
@@ -283,11 +273,38 @@ function processNote(note) {
 
 		statusDisplay.textContent = "Richtig";
 
-		if (currentIndex >= noteSequence.length) {
-			stopTimer();
+		if (
+    currentIndex >=
+    noteSequence.length
+) {
 
-			statusDisplay.textContent = "🎉 Notenzeile abgeschlossen";
-		}
+    stopTimer();
+
+    const totalTime =
+        (performance.now() - startTime)
+        / 1000;
+
+    const averageTime =
+        totalTime / solvedTimes.length;
+
+    timerDisplay.innerHTML =
+        `Gesamtzeit<br>${totalTime.toFixed(1)} s`;
+
+    updateResults();
+
+    resultContent.innerHTML +=
+        `
+        <div class="result-summary">
+            Gesamtzeit:
+            ${totalTime.toFixed(1)} s<br>
+            Durchschnitt:
+            ${averageTime.toFixed(1)} s
+        </div>
+        `;
+
+    statusDisplay.textContent =
+        "Notenzeile abgeschlossen";
+}
 	} else {
 		wrongIndex = currentIndex;
 
@@ -359,6 +376,7 @@ async function startMicrophone() {
 	startTimer();
 
 	statusDisplay.textContent = "Aufnahme läuft";
+	timerDisplay.innerHTML = "Training aktiv";
 
 	detect();
 }
@@ -386,7 +404,7 @@ stopBtn.addEventListener("click", stopMicrophone);
 newRowBtn.addEventListener("click", () => {
 	generateSequence();
 
-	timerDisplay.textContent = "0.0 s";
+	timerDisplay.innerHTML = "Bereit";
 
 	statusDisplay.textContent = "Neue Notenreihe";
 });
