@@ -1,212 +1,357 @@
 * {
-	box-sizing: border-box;
-	margin: 0;
-	padding: 0;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-	font-family: Arial, Helvetica, sans-serif;
-	background: #f5f7fa;
-	color: #222;
-	min-height: 100vh;
-	padding: 30px;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f5f7fa;
+    color: #222;
+    min-height: 100vh;
+    padding: 25px;
 }
 
 .container {
-	max-width: 1100px;
-	margin: 0 auto;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 h1 {
-	text-align: center;
-	margin-bottom: 10px;
-	color: #222;
+    text-align: center;
+    margin-bottom: 10px;
 }
 
 .subtitle {
-	text-align: center;
-	color: #666;
-	margin-bottom: 25px;
+    text-align: center;
+    color: #666;
+    margin-bottom: 20px;
 }
 
+/* -------------------- */
+/* Modusanzeige */
+/* -------------------- */
+
+.modeBox {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+}
+
+.modeLabel {
+    font-weight: bold;
+}
+
+#modeDisplay {
+    color: #0078d7;
+    font-weight: bold;
+    margin-left: 6px;
+}
+
+/* -------------------- */
+/* Buttons */
+/* -------------------- */
+
 .controls {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 12px;
-	justify-content: center;
-	margin-bottom: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 20px;
 }
 
 button {
-	border: none;
-	border-radius: 10px;
-	padding: 14px 22px;
-	font-size: 16px;
-	font-weight: 600;
-	cursor: pointer;
-	transition: all 0.2s ease;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: .2s;
 }
 
 button:hover {
-	transform: translateY(-1px);
+    opacity: .92;
 }
 
-button:active {
-	transform: translateY(1px);
+#modeBtn {
+    background: #6c757d;
+    color: white;
 }
 
 #startBtn {
-	background: #28a745;
-	color: white;
-}
-
-#startBtn:hover {
-	background: #23903d;
+    background: #28a745;
+    color: white;
 }
 
 #stopBtn {
-	background: #dc3545;
-	color: white;
-}
-
-#stopBtn:hover {
-	background: #c52f3e;
+    background: #dc3545;
+    color: white;
 }
 
 #newRowBtn {
-	background: #0078d7;
-	color: white;
+    background: #0078d7;
+    color: white;
 }
 
-#newRowBtn:hover {
-	background: #0060ad;
+#submitBtn {
+    background: #673ab7;
+    color: white;
 }
+
+/* -------------------- */
+/* Timer */
+/* -------------------- */
 
 .timerBox {
-	background: white;
-	border-radius: 12px;
-	padding: 18px;
-	text-align: center;
-	max-width: 250px;
-	margin: 0 auto 30px auto;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.timerLabel {
-	font-size: 14px;
-	color: #666;
-	margin-bottom: 6px;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 20px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
 }
 
 #timerDisplay {
-	font-size: 36px;
-	font-weight: bold;
-	color: #222;
+    font-size: 22px;
+    font-weight: bold;
+    color: #444;
 }
+
+/* -------------------- */
+/* Notensystem */
+/* -------------------- */
 
 #notation {
-	background: white;
-	border-radius: 12px;
-	padding: 15px;
-	min-height: 220px;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	margin-bottom: 25px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-	overflow-x: auto;
+    background: white;
+    border-radius: 12px;
+    min-height: 240px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    overflow-x: auto;
 }
 
+/* -------------------- */
+/* Status */
+/* -------------------- */
+
 #status {
-	text-align: center;
-	font-size: 22px;
-	font-weight: bold;
-	margin-bottom: 8px;
-	min-height: 30px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    min-height: 30px;
 }
 
 #frequency {
-	text-align: center;
-	color: #666;
-	font-size: 16px;
-	margin-bottom: 25px;
-	min-height: 22px;
+    text-align: center;
+    color: #777;
+    min-height: 25px;
+    margin-bottom: 20px;
 }
 
+/* -------------------- */
+/* Eingabe Noten benennen */
+/* -------------------- */
+
+#nameModeControls {
+
+    display: none;
+
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+
+    margin-bottom: 20px;
+
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+
+    text-align: center;
+}
+
+#noteInput {
+
+    width: 220px;
+
+    padding: 12px;
+
+    font-size: 18px;
+
+    border: 1px solid #d0d0d0;
+
+    border-radius: 10px;
+
+    text-align: center;
+
+    margin-right: 10px;
+}
+
+#noteInput:focus {
+
+    outline: none;
+
+    border-color: #0078d7;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(0,120,215,.2);
+}
+
+/* -------------------- */
+/* Ergebnisse */
+/* -------------------- */
+
 .results {
-	background: white;
-	border-radius: 12px;
-	padding: 20px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+    background: white;
+
+    border-radius: 12px;
+
+    padding: 20px;
+
+    box-shadow:
+        0 2px 6px
+        rgba(0,0,0,.08);
+
+    margin-bottom: 20px;
 }
 
 .results h2 {
-	margin-bottom: 15px;
+
+    margin-bottom: 12px;
 }
 
 #resultContent {
-	line-height: 1.8;
-	font-size: 16px;
+
+    line-height: 1.8;
 }
 
 .result-line {
-	display: flex;
-	justify-content: space-between;
-	border-bottom: 1px solid #efefef;
-	padding: 6px 0;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    padding: 8px 0;
+
+    border-bottom:
+        1px solid #efefef;
 }
 
 .result-summary {
-	margin-top: 15px;
-	padding-top: 15px;
-	border-top: 2px solid #ddd;
-	font-weight: bold;
+
+    margin-top: 15px;
+
+    padding-top: 15px;
+
+    border-top:
+        2px solid #ddd;
+
+    font-weight: bold;
 }
 
+/* -------------------- */
+/* Legende */
+/* -------------------- */
+
+.legend {
+
+    background: white;
+
+    padding: 20px;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 2px 6px
+        rgba(0,0,0,.08);
+}
+
+.legend h3 {
+
+    margin-bottom: 10px;
+}
+
+.legend ul {
+
+    padding-left: 20px;
+}
+
+.legend li {
+
+    margin-bottom: 6px;
+}
+
+/* -------------------- */
+/* Statusfarben */
+/* -------------------- */
+
 .success {
-	color: #28a745;
+    color: #28a745;
 }
 
 .error {
-	color: #dc3545;
+    color: #dc3545;
+}
+
+.warning {
+    color: #e0a800;
 }
 
 .info {
-	color: #0078d7;
+    color: #0078d7;
 }
 
+/* -------------------- */
+/* Mobilgeräte */
+/* -------------------- */
+
 @media (max-width: 768px) {
-	body {
-		padding: 16px;
-	}
 
-	h1 {
-		font-size: 28px;
-	}
+    body {
+        padding: 12px;
+    }
 
-	.controls {
-		flex-direction: column;
-	}
+    .controls {
 
-	button {
-		width: 100%;
-	}
+        flex-direction: column;
+    }
 
-	#timerDisplay {
-		font-size: 30px;
-	}
+    button {
 
-	#status {
-		font-size: 18px;
-	}
+        width: 100%;
+    }
 
-	#frequency {
-		font-size: 14px;
-	}
+    #noteInput {
 
-	#notation {
-		min-height: 180px;
-	}
+        width: 100%;
+
+        margin-right: 0;
+
+        margin-bottom: 12px;
+    }
+
+    #submitBtn {
+
+        width: 100%;
+    }
+
+    #timerDisplay {
+
+        font-size: 18px;
+    }
+
+    #status {
+
+        font-size: 18px;
+    }
+
+    #notation {
+
+        min-height: 200px;
+    }
 }
