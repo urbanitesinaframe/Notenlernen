@@ -1,416 +1,477 @@
 const VF = Vex.Flow;
 
-// ---------------------
-// Konfiguration
-// ---------------------
+/* -------------------------- */
+/* Konfiguration */
+/* -------------------------- */
 
-const NOTES = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"];
+const MODE_PLAY = "play";
+const MODE_NAME = "name";
 
-// ---------------------
-// DOM
-// ---------------------
+let currentMode = MODE_NAME;
 
-const notationDiv = document.getElementById("notation");
-const timerDisplay = document.getElementById("timerDisplay");
-const statusDisplay = document.getElementById("status");
-const frequencyDisplay = document.getElementById("frequency");
-const resultContent = document.getElementById("resultContent");
+const NOTES = [
+    "C4",
+    "D4",
+    "E4",
+    "F4",
+    "G4",
+    "A4",
+    "B4",
+    "C5"
+];
 
-const startBtn = document.getElementById("startBtn");
-const stopBtn = document.getElementById("stopBtn");
-const newRowBtn = document.getElementById("newRowBtn");
+/* -------------------------- */
+/* DOM */
+/* -------------------------- */
 
-// ---------------------
-// Zustand
-// ---------------------
+const modeDisplay =
+    document.getElementById("modeDisplay");
+
+const modeBtn =
+    document.getElementById("modeBtn");
+
+const startBtn =
+    document.getElementById("startBtn");
+
+const stopBtn =
+    document.getElementById("stopBtn");
+
+const newRowBtn =
+    document.getElementById("newRowBtn");
+
+const timerDisplay =
+    document.getElementById("timerDisplay");
+
+const notationDiv =
+    document.getElementById("notation");
+
+const statusDisplay =
+    document.getElementById("status");
+
+const resultContent =
+    document.getElementById("resultContent");
+
+const nameModeControls =
+    document.getElementById(
+        "nameModeControls"
+    );
+
+const noteInput =
+    document.getElementById("noteInput");
+
+const submitBtn =
+    document.getElementById("submitBtn");
+
+/* -------------------------- */
+/* Spielzustand */
+/* -------------------------- */
+
+let testRunning = false;
 
 let noteSequence = [];
 let currentIndex = 0;
-
 let wrongIndex = -1;
 
-let startTime = null;
-let noteStartTime = null;
+let startTime = 0;
+let noteStartTime = 0;
 
 let solvedTimes = [];
 
-let audioContext = null;
-let analyser = null;
-let microphone = null;
-let micStream = null;
+/* -------------------------- */
+/* Deutsche Benennung */
+/* -------------------------- */
 
-let listening = false;
+function toGermanName(note) {
 
-// ---------------------
-// Noten
-// ---------------------
+    const map = {
+        "C4": "c",
+        "D4": "d",
+        "E4": "e",
+        "F4": "f",
+        "G4": "g",
+        "A4": "a",
+        "B4": "h",
+
+        "C5": "c1",
+        "D5": "d1",
+        "E5": "e1",
+        "F5": "f1",
+        "G5": "g1",
+        "A5": "a1",
+        "B5": "h1"
+    };
+
+    return map[note] ?? note;
+}
+
+/* -------------------------- */
+/* Sequenz */
+/* -------------------------- */
 
 function generateSequence() {
-	noteSequence = [];
 
-	for (let i = 0; i < 5; i++) {
-		const note = NOTES[Math.floor(Math.random() * NOTES.length)];
+    noteSequence = [];
 
-		noteSequence.push(note);
-	}
+    for(let i = 0; i < 5; i++) {
 
-	currentIndex = 0;
-	wrongIndex = -1;
+        const note =
+            NOTES[
+                Math.floor(
+                    Math.random() *
+                    NOTES.length
+                )
+            ];
 
-	solvedTimes = [];
+        noteSequence.push(note);
+    }
 
-	updateResults();
-	renderSequence();
+    currentIndex = 0;
+    wrongIndex = -1;
+
+    solvedTimes = [];
+
+    resultContent.innerHTML =
+        "Noch keine Messung vorhanden.";
+
+    timerDisplay.textContent =
+        "Bereit";
+
+    renderSequence();
 }
+
+/* -------------------------- */
+/* VexFlow */
+/* -------------------------- */
 
 function noteToKey(note) {
-	const letter = note.substring(0, note.length - 1).toLowerCase();
 
-	const octave = note.slice(-1);
+    const pitch =
+        note.substring(
+            0,
+            note.length - 1
+        ).toLowerCase();
 
-	return `${letter}/${octave}`;
+    const octave =
+        note.slice(-1);
+
+    return `${pitch}/${octave}`;
 }
-
-// ---------------------
-// Darstellung
-// ---------------------
 
 function renderSequence() {
-	notationDiv.innerHTML = "";
 
-	const renderer = new VF.Renderer(notationDiv, VF.Renderer.Backends.SVG);
+    notationDiv.innerHTML = "";
 
-	renderer.resize(900, 220);
+    const renderer =
+        new VF.Renderer(
+            notationDiv,
+            VF.Renderer.Backends.SVG
+        );
 
-	const context = renderer.getContext();
+    renderer.resize(
+        900,
+        220
+    );
 
-	const stave = new VF.Stave(20, 50, 850);
+    const ctx =
+        renderer.getContext();
 
-	stave.addClef("treble");
-	stave.setContext(context).draw();
+    const stave =
+        new VF.Stave(
+            20,
+            50,
+            850
+        );
 
-	const notes = [];
+    stave
+        .addClef("treble")
+        .setContext(ctx)
+        .draw();
 
-	for (let i = 0; i < noteSequence.length; i++) {
-		let color = "#BDBDBD";
+    const notes = [];
 
-		if (i < currentIndex) {
-			color = "#28a745";
-		} else if (i === wrongIndex) {
-			color = "#dc3545";
-		} else if (i === currentIndex) {
-			color = "#e0a800";
-		}
+    for(let i = 0; i < noteSequence.length; i++) {
 
-		const staveNote = new VF.StaveNote({
-			clef: "treble",
-			keys: [noteToKey(noteSequence[i])],
-			duration: "q",
-		});
+        let color = "#BDBDBD";
 
-		staveNote.setStyle({
-			fillStyle: color,
-			strokeStyle: color,
-		});
+        if(i < currentIndex) {
+            color = "#28a745";
+        }
+        else if(i === wrongIndex) {
+            color = "#dc3545";
+        }
+        else if(i === currentIndex) {
+            color = "#e0a800";
+        }
 
-		notes.push(staveNote);
-	}
+        const note =
+            new VF.StaveNote({
+                clef: "treble",
+                keys: [
+                    noteToKey(
+                        noteSequence[i]
+                    )
+                ],
+                duration: "q"
+            });
 
-	VF.Formatter.FormatAndDraw(context, stave, notes);
+        note.setStyle({
+            fillStyle: color,
+            strokeStyle: color
+        });
+
+        notes.push(note);
+    }
+
+    VF.Formatter.FormatAndDraw(
+        ctx,
+        stave,
+        notes
+    );
 }
 
-// ---------------------
-// Timer
-// ---------------------
+/* -------------------------- */
+/* Test-Logik */
+/* -------------------------- */
 
-function startTimer() {
+function startTest() {
 
-    startTime = performance.now();
-    noteStartTime = startTime;
+    testRunning = true;
 
-    timerDisplay.innerHTML =
-        "Training aktiv<br>";
+    startTime =
+        performance.now();
+
+    noteStartTime =
+        startTime;
+
+    timerDisplay.textContent =
+        "Training aktiv";
+
+    statusDisplay.textContent =
+        currentMode === MODE_NAME
+            ? "Noten benennen"
+            : "Töne spielen";
 }
 
-// ---------------------
-// Ergebnisse
-// ---------------------
+function stopTest() {
 
-function updateResults() {
-	let html = "";
+    testRunning = false;
 
-	solvedTimes.forEach((time, index) => {
-		html += `
-            <div class="result-line">
-                <span>Note ${index + 1}</span>
-                <span>${time.toFixed(1)} s</span>
-            </div>
-        `;
-	});
-
-	if (solvedTimes.length > 0) {
-		const total = solvedTimes.reduce((a, b) => a + b, 0);
-
-		const average = total / solvedTimes.length;
-
-		html += `
-            <div class="result-summary">
-                Gesamtzeit: ${total.toFixed(1)} s<br>
-                Durchschnitt: ${average.toFixed(1)} s
-            </div>
-        `;
-	}
-
-	resultContent.innerHTML = html || "Noch keine Messung vorhanden.";
+    statusDisplay.textContent =
+        "Test beendet";
 }
 
-// ---------------------
-// Frequenz
-// ---------------------
+/* -------------------------- */
+/* Ergebnis */
+/* -------------------------- */
 
-function frequencyToMidi(freq) {
-	return Math.round(69 + 12 * Math.log2(freq / 440));
-}
+function finishTest() {
 
-function midiToNote(midi) {
-	const names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-
-	const octave = Math.floor(midi / 12) - 1;
-
-	return names[midi % 12] + octave;
-}
-
-// ---------------------
-// Pitch Detection
-// ---------------------
-
-function autoCorrelate(buffer, sampleRate) {
-	let SIZE = buffer.length;
-
-	let rms = 0;
-
-	for (let i = 0; i < SIZE; i++) {
-		rms += buffer[i] * buffer[i];
-	}
-
-	rms = Math.sqrt(rms / SIZE);
-
-	if (rms < 0.01) {
-		return -1;
-	}
-
-	let r1 = 0;
-	let r2 = SIZE - 1;
-
-	const thres = 0.2;
-
-	for (let i = 0; i < SIZE / 2; i++) {
-		if (Math.abs(buffer[i]) < thres) {
-			r1 = i;
-			break;
-		}
-	}
-
-	for (let i = 1; i < SIZE / 2; i++) {
-		if (Math.abs(buffer[SIZE - i]) < thres) {
-			r2 = SIZE - i;
-			break;
-		}
-	}
-
-	buffer = buffer.slice(r1, r2);
-	SIZE = buffer.length;
-
-	let c = new Array(SIZE).fill(0);
-
-	for (let i = 0; i < SIZE; i++) {
-		for (let j = 0; j < SIZE - i; j++) {
-			c[i] += buffer[j] * buffer[j + i];
-		}
-	}
-
-	let d = 0;
-
-	while (c[d] > c[d + 1]) {
-		d++;
-	}
-
-	let maxValue = -1;
-	let maxPos = -1;
-
-	for (let i = d; i < SIZE; i++) {
-		if (c[i] > maxValue) {
-			maxValue = c[i];
-			maxPos = i;
-		}
-	}
-
-	return sampleRate / maxPos;
-}
-
-// ---------------------
-// Auswertung
-// ---------------------
-
-function processNote(note) {
-	if (!listening) {
-		return;
-	}
-
-	const expected = noteSequence[currentIndex];
-
-	if (note === expected) {
-		const solvingTime = (performance.now() - noteStartTime) / 1000;
-
-		solvedTimes.push(solvingTime);
-
-		noteStartTime = performance.now();
-
-		currentIndex++;
-
-		renderSequence();
-		updateResults();
-
-		statusDisplay.textContent = "Richtig";
-
-		if (
-    currentIndex >=
-    noteSequence.length
-) {
-
-    stopTimer();
+    testRunning = false;
 
     const totalTime =
-        (performance.now() - startTime)
-        / 1000;
+        (
+            performance.now() -
+            startTime
+        ) / 1000;
 
     const averageTime =
-        totalTime / solvedTimes.length;
+        totalTime /
+        solvedTimes.length;
 
     timerDisplay.innerHTML =
         `Gesamtzeit<br>${totalTime.toFixed(1)} s`;
 
-    updateResults();
+    let html = "";
 
-    resultContent.innerHTML +=
-        `
+    solvedTimes.forEach(
+        (time,index) => {
+
+            html += `
+                <div class="result-line">
+                    <span>Note ${index+1}</span>
+                    <span>${time.toFixed(1)} s</span>
+                </div>
+            `;
+        }
+    );
+
+    html += `
         <div class="result-summary">
             Gesamtzeit:
-            ${totalTime.toFixed(1)} s<br>
+            ${totalTime.toFixed(1)} s
+            <br>
             Durchschnitt:
             ${averageTime.toFixed(1)} s
         </div>
-        `;
+    `;
+
+    resultContent.innerHTML =
+        html;
 
     statusDisplay.textContent =
-        "Notenzeile abgeschlossen";
-}
-	} else {
-		wrongIndex = currentIndex;
-
-		renderSequence();
-
-		statusDisplay.textContent = `Falsch (${note})`;
-
-		setTimeout(() => {
-			wrongIndex = -1;
-
-			renderSequence();
-		}, 600);
-	}
+        "🎉 Notenzeile abgeschlossen";
 }
 
-// ---------------------
-// Audio Loop
-// ---------------------
+/* -------------------------- */
+/* Benennungsmodus */
+/* -------------------------- */
 
-function detect() {
-	if (!listening) {
-		return;
-	}
+function checkAnswer() {
 
-	const buffer = new Float32Array(analyser.fftSize);
+    if(
+        !testRunning ||
+        currentMode !== MODE_NAME
+    ) {
+        return;
+    }
 
-	analyser.getFloatTimeDomainData(buffer);
+    const expected =
+        toGermanName(
+            noteSequence[currentIndex]
+        );
 
-	const frequency = autoCorrelate(buffer, audioContext.sampleRate);
+    const answer =
+        noteInput.value
+            .trim()
+            .toLowerCase();
 
-	if (frequency > 0) {
-		frequencyDisplay.textContent = frequency.toFixed(1) + " Hz";
+    if(answer === expected) {
 
-		const midi = frequencyToMidi(frequency);
+        const noteTime =
+            (
+                performance.now() -
+                noteStartTime
+            ) / 1000;
 
-		const note = midiToNote(midi);
+        solvedTimes.push(
+            noteTime
+        );
 
-		processNote(note);
-	}
+        noteStartTime =
+            performance.now();
 
-	requestAnimationFrame(detect);
+        currentIndex++;
+
+        wrongIndex = -1;
+
+        renderSequence();
+
+        noteInput.value = "";
+
+        if(
+            currentIndex >=
+            noteSequence.length
+        ) {
+            finishTest();
+        }
+
+    } else {
+
+        wrongIndex =
+            currentIndex;
+
+        renderSequence();
+
+        setTimeout(() => {
+
+            wrongIndex = -1;
+
+            renderSequence();
+
+        }, 600);
+    }
 }
 
-// ---------------------
-// Mikrofon
-// ---------------------
+/* -------------------------- */
+/* Modus */
+/* -------------------------- */
 
-async function startMicrophone() {
-	if (listening) {
-		return;
-	}
+function updateModeUI() {
 
-	micStream = await navigator.mediaDevices.getUserMedia({
-		audio: true,
-	});
+    if(
+        currentMode === MODE_NAME
+    ) {
 
-	listening = true;
+        modeDisplay.textContent =
+            "Noten benennen";
 
-	audioContext = new AudioContext();
+        nameModeControls.style.display =
+            "block";
 
-	analyser = audioContext.createAnalyser();
+    } else {
 
-	analyser.fftSize = 2048;
+        modeDisplay.textContent =
+            "Töne spielen";
 
-	microphone = audioContext.createMediaStreamSource(micStream);
-
-	microphone.connect(analyser);
-
-	startTimer();
-
-	statusDisplay.textContent = "Aufnahme läuft";
-	timerDisplay.innerHTML = "Training aktiv";
-
-	detect();
+        nameModeControls.style.display =
+            "none";
+    }
 }
 
-function stopMicrophone() {
-	listening = false;
+function switchMode() {
 
-	stopTimer();
+    stopTest();
 
-	if (micStream) {
-		micStream.getTracks().forEach((track) => track.stop());
-	}
+    currentMode =
+        currentMode === MODE_NAME
+            ? MODE_PLAY
+            : MODE_NAME;
 
-	statusDisplay.textContent = "Aufnahme beendet";
+    timerDisplay.textContent =
+        "Bereit";
+
+    resultContent.innerHTML =
+        "Noch keine Messung vorhanden.";
+
+    updateModeUI();
+
+    generateSequence();
 }
 
-// ---------------------
-// Events
-// ---------------------
+/* -------------------------- */
+/* Events */
+/* -------------------------- */
 
-startBtn.addEventListener("click", startMicrophone);
+modeBtn.addEventListener(
+    "click",
+    switchMode
+);
 
-stopBtn.addEventListener("click", stopMicrophone);
+startBtn.addEventListener(
+    "click",
+    startTest
+);
 
-newRowBtn.addEventListener("click", () => {
-	generateSequence();
+stopBtn.addEventListener(
+    "click",
+    stopTest
+);
 
-	timerDisplay.innerHTML = "Bereit";
+newRowBtn.addEventListener(
+    "click",
+    generateSequence
+);
 
-	statusDisplay.textContent = "Neue Notenreihe";
-});
+submitBtn.addEventListener(
+    "click",
+    checkAnswer
+);
 
-// ---------------------
-// Init
-// ---------------------
+noteInput.addEventListener(
+    "keydown",
+    event => {
 
+        if(
+            event.key === "Enter"
+        ) {
+            checkAnswer();
+        }
+    }
+);
+
+/* -------------------------- */
+/* Init */
+/* -------------------------- */
+
+updateModeUI();
 generateSequence();
